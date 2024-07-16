@@ -11,7 +11,16 @@ app.get('/', function (req, res) {
 })
 
 app.post('/subscribe', function (req, res) {
-  res.send('Hello World')
+  // maybe add recaptcha here?
+  var email = req.body.id
+  // temp captcha mock code
+  var captchaStatus = (1=1)
+  if(captchaStatus && email != null){
+    db.insertEmail(email)
+    res.send('It works!')
+  }else{
+    res.send('Invalid')
+  }
 })
 
 app.listen(3000)
