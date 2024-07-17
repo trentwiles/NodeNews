@@ -4,6 +4,11 @@
 <% } else { %>
     <title>Newsletter</title>
 <% } %>
+<% if (typeof index !== 'undefined' && !index) { %>
+  <!-- DON'T INDEX-->
+  <meta name="robots" content="noindex,nofollow">
+<% } %>
+
 <link rel="stylesheet" href="https://unpkg.com/missing.css@1.1.2">
 <style>
   body { padding:50px; }
