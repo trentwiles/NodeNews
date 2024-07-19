@@ -1,6 +1,11 @@
 const express = require('express')
+const bodyParser = require('body-parser');
 const app = express()
 const db = require('./dbase')
+
+// accepts standard HTML form data plus JSON-encoded data
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set('view engine', 'ejs');
 
@@ -12,8 +17,14 @@ app.get('/', function (req, res) {
 
 app.post('/subscribe', function (req, res) {
   // maybe add recaptcha here?
-  var email = req.body.id
-  // temp captcha mock code
+  var email = req.body.email
+  var terms = req.body.terms
+
+  if(terms != 'on'){
+    res.redirect('/?error=terms')
+  }
+
+  // replace this with a future captcha implementation
   var captchaStatus = true
   if(captchaStatus && email != null){
     db.insertEmail(email)

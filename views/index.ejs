@@ -6,6 +6,15 @@
     
     <body>
         <h1>Newsletter</h1>
+        <form id="subscriptionForm" action="/subscribe" method="POST" enctype="application/x-www-form-urlencoded">
+            <label for="email">Email address:</label><br>
+            <input type="email" id="email" name="email" required><br><br>
+            
+            <input type="checkbox" id="terms" name="terms" required>
+            <label for="terms">I agree to the terms and conditions</label><br><br>
+            
+            <button type="submit">Subscribe</button>
+        </form>
     </body>
     <%- include('partials/footer.ejs'); %>
 </html>
