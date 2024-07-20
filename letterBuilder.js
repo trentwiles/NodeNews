@@ -54,3 +54,14 @@ const CONTENTS = `
 const $ = cheerio.load(CONTENTS)
 const TEXT_ONLY = $.text()
 
+function buildNewsletter(){
+    return {
+        "title": TITLE,
+        "html": CONTENTS,
+        "raw": TEXT_ONLY
+    }
+}
+
+module.exports = {
+    buildNewsletter
+}

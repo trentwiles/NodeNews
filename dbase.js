@@ -25,7 +25,7 @@ function insertEmail(email){
     //return true
 }
 
-function selectAll(){
+async function selectAll(){
     const db = new sqlite3.Database('db.db')
     var emails = []
     db.serialize(() => {
