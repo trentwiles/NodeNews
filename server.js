@@ -43,6 +43,7 @@ app.get('/unsubscribe', function(req, res){
 })
 
 app.get('/admin', function(req, res){
+  // check to make sure the user is an admin...
   const x = db.getDBObject();
   var emails = [];
   
@@ -60,5 +61,14 @@ app.get('/admin', function(req, res){
       });
   });
 });
+
+app.post('/admin/delete', function(req, res){
+  // check to make sure the user is an admin...
+
+  // and maybe another check to make sure they are using some xsrf key...
+
+  db.wipeEmails()
+  res.redirect('/admin/?deleted=true')
+})
 
 app.listen(3000)
