@@ -25,12 +25,17 @@ function insertEmail(email){
     //return true
 }
 
+function getDBObject(){
+    return new sqlite3.Database('db.db')
+}
+
 async function selectAll(){
     const db = new sqlite3.Database('db.db')
     var emails = []
     db.serialize(() => {
         db.each("SELECT email from eml", (err, row) => {
             emails.push(row.email)
+            console.log(row.email)
         });
         db.close()
     })
@@ -51,5 +56,6 @@ module.exports = {
     init,
     insertEmail,
     selectAll,
-    wipeEmails
+    wipeEmails,
+    getDBObject
 }
