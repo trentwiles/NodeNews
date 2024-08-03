@@ -42,7 +42,7 @@ switch (DATE.getDate()){
 const TITLE = process.env.NEWSLETTER_TITLE
 const CONTENTS = `
 <h1>This is my newsletter</h1>
-<p>Good morning! Today is ${DAYS[DATE.getDay()-1]}, the ${DATE.getDate()}${extension} of ${MONTHS[DATE.getMonth()-1]}, ${DATE.getFullYear()}. Here are five things you need to know...</p>
+<p>Good morning! Today is ${DAYS[DATE.getDay()-1]}, the ${DATE.getDate()}${extension} of ${MONTHS[DATE.getMonth()]}, ${DATE.getFullYear()}. Here are five things you need to know...</p>
 <ul>
 <li>Always smile</li>
 <li>Don't forget to brush your teeth</li>

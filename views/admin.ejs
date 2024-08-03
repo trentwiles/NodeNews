@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <%- include('partials/header.ejs'); %>
+    </head>
+    
+    <body>
+        <ul>
+            <% for(var i=0; i<emails.length; i++) {%>
+                <li><%= emails[i] %></li>
+             <% } %>
+        </ul>
+    </body>
+    <%- include('partials/footer.ejs'); %>
+</html>

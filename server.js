@@ -42,4 +42,23 @@ app.get('/unsubscribe', function(req, res){
   res.render('unsub', {"title": "Unsubcribe", index: false})
 })
 
+app.get('/admin', function(req, res){
+  const x = db.getDBObject();
+  var emails = [];
+  
+  x.serialize(() => {
+      x.each("SELECT email from eml", (err, row) => {
+          if (err) {
+              console.error(err);
+              return res.status(500).send("DB error, check logs/db");
+          }
+          emails.push(row.email);
+      }, () => {
+          // The callback, so after the HTTP request is done
+          x.close();
+          res.render('admin', { emails: emails });
+      });
+  });
+});
+
 app.listen(3000)
