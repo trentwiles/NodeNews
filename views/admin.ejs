@@ -5,13 +5,22 @@
     </head>
     
     <body>
+        <script>
+            function nuke(){
+                // this should send an HTTP request to delete all emails
+                // to be implemented
+            }
+        </script>
         <h1>Site information</h1>
         <p>Total emails: <%- emails.length %> </p>
+        <i>Latest subscribers:</i>
         <ul>
             <% for(var i=0; i<emails.length; i++) {%>
                 <li><%= emails[i] %></li>
              <% } %>
         </ul>
+        <br>
+        <a href="javascript:nuke();"><button>Wipe Subscriber List</button></a>
     </body>
     <%- include('partials/footer.ejs'); %>
 </html>

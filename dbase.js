@@ -36,10 +36,11 @@ async function selectAll(){
         db.each("SELECT email from eml", (err, row) => {
             emails.push(row.email)
             console.log(row.email)
+        }, () => {
+            db.close();
+            return emails
         });
-        db.close()
     })
-    return emails
 }
 
 function wipeEmails(){
@@ -47,9 +48,10 @@ function wipeEmails(){
     db.serialize(() => {
         const stmt = db.prepare("DELETE FROM eml WHERE 0=0");
         stmt.run();
-        db.close()
-    })
-    return true
+    }, () => {
+        db.close();
+        return true
+    });
 }
 
 module.exports = {
