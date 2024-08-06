@@ -24,7 +24,24 @@
                     }
                 })
             }
+            function email(){
+                $("#email").text("Please wait...")
+                $("#email").prop("disabled",true);
+                $("#emailA").prop("href","#");
+                $.post("/admin/test", function(data, status){
+                    console.log(status)
+                    if(status == "success"){
+                        $("#email").text("Send Test Email")
+                        $("#testEmailStatus").text("Test email sent...")
+                    }else{
+                        $("#testEmailStatus").text("Unable to send test email, check mail config")
+                    }
+                })
+            }
         </script>
+        <h1>Email Functions</h1>
+        <a id="emailA" href="javascript:email();"><button id="email">Send Test Email</button></a>
+        <p id="testEmailStatus"></p>
         <h1>Site information</h1>
         <p id="total">Total emails: <%- emails.length %> </p>
         <!-- LIST IS ONLY CREATED WHEN DATABASE CONTAINS SUBSCRIBERS-->
@@ -34,6 +51,7 @@
             <ul id="subList">
                 <% for(var i=0; i<emails.length; i++) {%>
                     <li><%= emails[i] %></li>
+                    <% if(i >= 3){ break; } %>
                 <% } %>
             </ul>
         </div>

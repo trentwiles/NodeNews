@@ -2,6 +2,8 @@ const express = require('express')
 const bodyParser = require('body-parser');
 const app = express()
 const db = require('./dbase')
+const mailer = require('./mailer')
+const letterBuilder = require('./letterBuilder')
 
 // accepts standard HTML form data plus JSON-encoded data
 app.use(bodyParser.json());
@@ -69,6 +71,11 @@ app.post('/admin/delete', function(req, res){
 
   db.wipeEmails()
   res.redirect('/admin/?deleted=true')
+})
+
+app.post('/admin/test', function(req, res){
+  var newsletterMetaData = letterBuilder.buildTestNewsletter()
+  //mailer.massEmail('Hello!', )
 })
 
 app.listen(3000)

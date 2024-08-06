@@ -61,6 +61,17 @@ function buildNewsletter(){
     }
 }
 
+function buildTestNewsletter(){
+    var epoch = Math.floor(+ new Date()/1000) 
+    var testString = "Timestamp: " + epoch + " - This is a test email that can be ignored"
+    return {
+        "title": "*** TEST EMAIL ***",
+        "html": `<p>${testString}</p>`,
+        "raw": testString
+    }
+}
+
 module.exports = {
-    buildNewsletter
+    buildNewsletter,
+    buildTestNewsletter
 }
