@@ -2,6 +2,7 @@
 <html>
     <head>
         <%- include('partials/header.ejs'); %>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     </head>
     
     <body>
@@ -9,18 +10,35 @@
             function nuke(){
                 // this should send an HTTP request to delete all emails
                 // to be implemented
+                $("#delete").text("Please wait...")
+                $("#delete").prop("disabled",true);
+                $("#deleteA").prop("href","#");
+                $.post("/admin/delete", function(data, status){
+                    console.log(status)
+                    if(status == "success"){
+                        $("#delete").text("Wipe Subscriber List")
+                        $("#subList").hide()
+                        $("#total").text("Total emails: 0")
+                    }else{
+                        $("#delete").text("Error")
+                    }
+                })
             }
         </script>
         <h1>Site information</h1>
-        <p>Total emails: <%- emails.length %> </p>
+        <p id="total">Total emails: <%- emails.length %> </p>
+        <!-- LIST IS ONLY CREATED WHEN DATABASE CONTAINS SUBSCRIBERS-->
+        <% if (emails.length != 0) { %>
         <i>Latest subscribers:</i>
-        <ul>
+        <ul id="subList">
             <% for(var i=0; i<emails.length; i++) {%>
                 <li><%= emails[i] %></li>
              <% } %>
         </ul>
+        <% } %>
+        <!-- END LOGIC -->
         <br>
-        <a href="javascript:nuke();"><button>Wipe Subscriber List</button></a>
+        <a id="deleteA" href="javascript:nuke();"><button id="delete">Wipe Subscriber List</button></a>
     </body>
     <%- include('partials/footer.ejs'); %>
 </html>
