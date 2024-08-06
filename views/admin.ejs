@@ -17,7 +17,7 @@
                     console.log(status)
                     if(status == "success"){
                         $("#delete").text("Wipe Subscriber List")
-                        $("#subList").hide()
+                        $("#listContainer").hide()
                         $("#total").text("Total emails: 0")
                     }else{
                         $("#delete").text("Error")
@@ -29,16 +29,22 @@
         <p id="total">Total emails: <%- emails.length %> </p>
         <!-- LIST IS ONLY CREATED WHEN DATABASE CONTAINS SUBSCRIBERS-->
         <% if (emails.length != 0) { %>
-        <i>Latest subscribers:</i>
-        <ul id="subList">
-            <% for(var i=0; i<emails.length; i++) {%>
-                <li><%= emails[i] %></li>
-             <% } %>
-        </ul>
+        <div id="listContainer">
+            <i>Latest subscribers:</i>
+            <ul id="subList">
+                <% for(var i=0; i<emails.length; i++) {%>
+                    <li><%= emails[i] %></li>
+                <% } %>
+            </ul>
+        </div>
         <% } %>
         <!-- END LOGIC -->
         <br>
-        <a id="deleteA" href="javascript:nuke();"><button id="delete">Wipe Subscriber List</button></a>
+        <% if (emails.length != 0) { %>
+            <a id="deleteA" href="javascript:nuke();"><button id="delete">Wipe Subscriber List</button></a>
+        <% } else{ %>
+            <a id="deleteA" href="#" disabled="true"><button id="delete">Wipe Subscriber List</button></a>
+        <% } %>
     </body>
     <%- include('partials/footer.ejs'); %>
 </html>
