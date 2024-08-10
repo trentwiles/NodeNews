@@ -44,7 +44,7 @@ End Functions
 */
 
 app.get('/', function (req, res) {
-  res.render('index', {title: "Home", index: true})
+  res.render('index', {title: `${process.env.NEWSLETTER_TITLE} | Home`, index: true})
 })
 
 app.post('/subscribe', function (req, res) {
@@ -106,11 +106,9 @@ app.post('/admin/delete', function(req, res){
 app.post('/admin/test', function(req, res){
   var newsletterMetaData = letterBuilder.buildTestNewsletter()
   massMailer(newsletterMetaData, res)
-  
 })
 
 app.post('/admin/send', function(req, res){
-
   // more or less the /admin/test route, but with real email contents
   var newsletterMetaData = letterBuilder.buildNewsletter()
   massMailer(newsletterMetaData, res)
