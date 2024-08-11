@@ -5,6 +5,7 @@ const db = require('./dbase')
 const mailer = require('./mailer')
 const letterBuilder = require('./letterBuilder')
 const dotenv = require('dotenv')
+const fs = require('fs'); 
 
 dotenv.config()
 
@@ -16,6 +17,27 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
 db.init()
+
+/*
+Check that the .env file has been properly set up
+*/
+if (!fs.existsSync('.env')) {
+  throw new Error('No .env file found. Please run setup wizard by running \'node setup.js\'');
+}
+
+/*
+Now check that all of the (required) variables have been filled out
+*/
+
+if(
+  !(process.env.SMTP_HOST &&
+    process.env.SMTP_USER &&
+    process.env.SMTP_PASS &&
+    process.env.NEWSLETTER_TITLE
+  ) != (null || "")
+){
+  throw new Error("One or more of the required .env variables has not been filled out. Please refer to the README.md file.")
+}
 
 /*
 Functions
@@ -34,7 +56,7 @@ function massMailer(metadata, res){
       }, () => {
         // close database connection
           x.close();
-          mailer.massEmail("Newsletter Github", emails, metadata.title, metadata.raw, metadata.html)
+          mailer.massEmail(process.env.NEWSLETTER_TITLE, emails, metadata.title, metadata.raw, metadata.html)
           res.send(emails)
       });
   });
@@ -119,6 +141,11 @@ app.get('/admin/debug', function(req, res){
     'os': process.platform,
     'env_configuration': env_status
   }));
+})
+
+// The most important part of the admin page, the login
+app.get('/admin/login', function(req, res){
+  res.send('Soon!')
 })
 
 app.listen(3000)
