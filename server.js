@@ -33,7 +33,9 @@ if(
   !(process.env.SMTP_HOST &&
     process.env.SMTP_USER &&
     process.env.SMTP_PASS &&
-    process.env.NEWSLETTER_TITLE
+    process.env.NEWSLETTER_TITLE &&
+    process.env.ADMIN_USERNAME &&
+    process.env.ADMIN_PASSWORD
   ) != (null || "")
 ){
   throw new Error("One or more of the required .env variables has not been filled out. Please refer to the README.md file.")
@@ -145,7 +147,22 @@ app.get('/admin/debug', function(req, res){
 
 // The most important part of the admin page, the login
 app.get('/admin/login', function(req, res){
-  res.send('Soon!')
+  res.render('login')
+})
+
+app.post('/admin/login', function(res, req){
+  var username = req.body.username
+  var password = req.body.password
+
+  //https://stackabuse.com/handling-authentication-in-express-js/
+  // Review ^^^^^^^
+
+  if(username == process.env.ADMIN_USERNAME && password == process.env.ADMIN_PASSWORD){
+    // it works
+  }else{
+    // it doesn't work
+  }
+
 })
 
 app.listen(3000)
