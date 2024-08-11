@@ -11,20 +11,23 @@
             });
         </script>
         <!-- Background Video-->
-        <video class="bg-video" playsinline="playsinline" autoplay="autoplay" muted="muted" loop="loop"><source src="https://cdn.glitch.global/54f133bc-fa42-447e-b47c-634a001d6d3a/bg.mp4?v=1723333794189" type="video/mp4" /></video>
+        <% if (typeof process.env.BACKGROUND_URL !== 'undefined' && process.env.BACKGROUND_URL !== (null || "")) { %>
+            <video class="bg-video" playsinline="playsinline" autoplay="autoplay" muted="muted" loop="loop"><source src="<%= process.env.BACKGROUND_URL %>" type="video/mp4" /></video>
+        <% }else{%>
+            <!-- Fallback to default template video -->
+            <video class="bg-video" playsinline="playsinline" autoplay="autoplay" muted="muted" loop="loop"><source src="https://cdn.glitch.global/54f133bc-fa42-447e-b47c-634a001d6d3a/bg.mp4?v=1723333794189" type="video/mp4" /></video>
+        <% } %>
         <!-- Masthead-->
         <div class="masthead">
             <div class="masthead-content text-white">
                 <div class="container-fluid px-4 px-lg-0">
-                    <h1 class="fst-italic lh-1 mb-4">Our Website is Coming Soon</h1>
-                    <p class="mb-5">We're working hard to finish the development of this site. Sign up below to receive updates and to be notified when we launch!</p>
+                    <h1 class="fst-italic lh-1 mb-4"><%= process.env.NEWSLETTER_TITLE %></h1>
+                    <p class="mb-5">Sign up to get updates on our newsletter.</p>
                     <form id="contactForm" method="post" action="/subscribe">
-                        <!-- Email address input-->
                         <div class="row input-group-newsletter">
                             <div class="col"><input class="form-control" id="email" type="email" name="email" placeholder="Enter email address..." aria-label="Enter email address..." data-sb-validations="required,email" /></div>
                             <div class="col-auto"><button class="btn btn-primary" id="submitButton">Notify Me!</button></div>
-                        </div>                        <!-- Submit success message-->
-                        <!---->
+                        </div>
                     </form>
                 </div>
             </div>
@@ -33,9 +36,15 @@
         <!-- For more icon options, visit https://fontawesome.com/icons?d=gallery&p=2&s=brands-->
         <div class="social-icons">
             <div class="d-flex flex-row flex-lg-column justify-content-center align-items-center h-100 mt-3 mt-lg-0">
-                <a class="btn btn-dark m-3" href="#!"><i class="fab fa-twitter"></i></a>
-                <a class="btn btn-dark m-3" href="#!"><i class="fab fa-facebook-f"></i></a>
-                <a class="btn btn-dark m-3" href="#!"><i class="fab fa-instagram"></i></a>
+                <% if (typeof process.env.TWITTER_URL !== 'undefined' && process.env.TWITTER_URL !== (null || "")) { %>
+                    <a class="btn btn-dark m-3" href="<%= process.env.TWITTER_URL %>"><i class="fab fa-twitter"></i></a>
+                <% }%>
+                <% if (typeof process.env.FACEBOOK_URL !== 'undefined' && process.env.FACEBOOK_URL !== (null || "")) { %>
+                    <a class="btn btn-dark m-3" href="<%= process.env.FACEBOOK_URL %>"><i class="fab fa-facebook"></i></a>
+                <% }%>
+                <% if (typeof process.env.INSTAGRAM_URL !== 'undefined' && process.env.INSTAGRAM_URL !== (null || "")) { %>
+                    <a class="btn btn-dark m-3" href="<%= process.env.INSTAGRAM_URL %>"><i class="fab fa-instagram"></i></a>
+                <% }%>
             </div>
         </div>
         <%- include('partials/footerNew.ejs'); %>
