@@ -143,11 +143,13 @@ app.get('/admin', function(req, res){
       if (row) {
         console.log("*** AUTHENTICATED USER, CONTINUE TO ADMIN PAGE ***")
       } else {
+        // cookie is invalid, send to login
         return res.redirect("/admin/login")
       }
     });
   }else{
-    return res.send("no cookie")
+    // there is no cookie, send to homepage
+    return res.redirect("/admin/login")
   }
   
   if("action" in req.query){
@@ -167,8 +169,21 @@ app.get('/admin', function(req, res){
       massMailer(newsletterMetaData, res)
       return res.send("sent the newsletter")
     }
+    if(req.query.action == "debug"){
+      res.setHeader('Content-Type', 'application/json');
+      var env_status = ((process.env.SMTP_USER && process.env.SMTP_HOST && process.env.SMTP_PASS && process.env.NEWSLETTER_TITLE) != null)
+      // Guide to the debug page
+      // os: Operating System
+      // env_configuration: Are all of the parameters of the .env file set?
+      return res.end(JSON.stringify({
+        'os': process.platform,
+        'env_configuration': env_status
+      }));
+    }
   }
 
+  // if the user has not requested any of the action pages above,
+  // they will be shown the plain admin panel
   var emails = [];
   
   x.serialize(() => {
@@ -185,18 +200,6 @@ app.get('/admin', function(req, res){
       });
   });
 });
-
-app.get('/admin/debug', function(req, res){
-  res.setHeader('Content-Type', 'application/json');
-  var env_status = ((process.env.SMTP_USER && process.env.SMTP_HOST && process.env.SMTP_PASS && process.env.NEWSLETTER_TITLE) != null)
-  // Guide to the /admin/debug page
-  // os: Operating System
-  // env_configuration: Are all of the parameters of the .env file set?
-  res.end(JSON.stringify({
-    'os': process.platform,
-    'env_configuration': env_status
-  }));
-})
 
 // The most important part of the admin page, the login
 app.get('/admin/login', async function(req, res){
