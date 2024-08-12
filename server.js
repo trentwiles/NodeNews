@@ -5,6 +5,8 @@ const db = require('./dbase')
 const mailer = require('./mailer')
 const letterBuilder = require('./letterBuilder')
 const dotenv = require('dotenv')
+const cookieParser = require('cookie-parser');
+const crypto = require('crypto');
 const fs = require('fs'); 
 
 dotenv.config()
@@ -13,6 +15,7 @@ dotenv.config()
 // accepts standard HTML form data plus JSON-encoded data
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser())
 
 app.set('view engine', 'ejs');
 
@@ -63,6 +66,40 @@ function massMailer(metadata, res){
       });
   });
 }
+
+function generateAuthToken(){
+  return crypto.randomBytes(30).toString('hex')
+}
+
+function checkIfAuth(cookies){
+  console.log(cookies)
+  if("token" in JSON.parse(cookies)){
+    console.log("Token cookie is set, asking database")
+    const x = db.getDBObject()
+    const cooky = []
+    x.serialize(() => {
+      x.each("SELECT * from tokens WHERE tkn=?", [JSON.parse(cookies).token], (err, row) => {
+          if (err) {
+              console.error(err);
+              //return res.status(500).send("DB error, check logs/db");
+              return false
+          }
+          console.log(row)
+          cooky.push(row);
+      }, () => {
+          // The callback, so after the HTTP request is done
+          x.close();
+          // if the array of cookies pulled from the databse is longer than 0, that means
+          // we found a match, so the cookie in the browser is valid!
+          console.log("database operations all done")
+          console.log(cooky.length)
+          return (cooky.length != 0)
+      });
+  });
+  }
+  // no cookie set, so false
+  return false
+}
 /*
 End Functions
 */
@@ -96,6 +133,23 @@ app.get('/unsubscribe', function(req, res){
 app.get('/admin', function(req, res){
   // check to make sure the user is an admin...
   const x = db.getDBObject();
+
+  if("token" in req.cookies){
+    x.get('SELECT * FROM tokens WHERE tkn = ?', [req.cookies.token], (err, row) => {
+      if (err) {
+        return res.status(500).send('Database error.');
+      }
+  
+      if (row) {
+        console.log("*** AUTHENTICATED USER, CONTINUE TO ADMIN PAGE ***")
+      } else {
+        return res.redirect("/admin/login")
+      }
+    });
+  }else{
+    return res.send("no cookie")
+  }
+  
   var emails = [];
   
   x.serialize(() => {
@@ -117,6 +171,23 @@ app.post('/admin/delete', function(req, res){
   // check to make sure the user is an admin...
 
   // and maybe another check to make sure they are using some xsrf key...
+  const x = db.getDBObject();
+
+  if("token" in req.cookies){
+    x.get('SELECT * FROM tokens WHERE tkn = ?', [req.cookies.token], (err, row) => {
+      if (err) {
+        return res.status(500).send('Database error.');
+      }
+  
+      if (row) {
+        console.log("*** AUTHENTICATED USER, CONTINUE TO /admin/delete ***")
+      } else {
+        return res.redirect("/admin/login")
+      }
+    });
+  }else{
+    return res.send("no cookie")
+  }
 
   db.wipeEmails()
   res.redirect('/admin/?deleted=true')
@@ -146,11 +217,21 @@ app.get('/admin/debug', function(req, res){
 })
 
 // The most important part of the admin page, the login
-app.get('/admin/login', function(req, res){
+app.get('/admin/login', async function(req, res){
+  if(checkIfAuth(JSON.stringify(req.cookies))){
+    console.log("User attempted to access login page, but was already logged in...")
+    res.redirect("/admin")
+  }
   res.render('login')
 })
 
-app.post('/admin/login', function(res, req){
+app.post('/admin/login', async function(req, res){
+  // if(checkIfAuth(JSON.stringify(req.cookies))){
+  //   console.log("User attempted to use login page, but was already logged in...")
+  //   res.redirect("/admin")
+  // }
+  res.clearCookie("token")
+
   var username = req.body.username
   var password = req.body.password
 
@@ -158,9 +239,19 @@ app.post('/admin/login', function(res, req){
   // Review ^^^^^^^
 
   if(username == process.env.ADMIN_USERNAME && password == process.env.ADMIN_PASSWORD){
-    // it works
+    // create a new authtoken
+    const authToken = generateAuthToken()
+    // add it to the database (current time is set in dbase.js)
+    db.insertToken(authToken)
+    // add it to the local cookies (and make it expire 24 hours from now)
+    res.cookie('token', authToken, 
+      { expires: new Date(Date.now() + (24 * 60 * 60)),});
+    
+    // send user to the admin homepage
+    res.redirect("/admin")
+    
   }else{
-    // it doesn't work
+    res.redirect("/admin/login?error=true")
   }
 
 })

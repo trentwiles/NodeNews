@@ -1,14 +1,22 @@
 const axios = require('axios')
-
+const db = require('./dbase')
 // testing file to add a few emails
-for(var i = 0; i < 4; i++){
-    var random = Math.floor(Math.random() * 10)
-    console.log(random)
-    axios.post('http://localhost:3000/subscribe', {'email': 'trent' + random + '@example.com'})
-    .then(response => {
-        console.log(response.data);
-    })
-    .catch(error => {
-        console.error('Error fetching data:', error);
+const x = db.getDBObject()
+x.serialize(() => {
+    x.each("SELECT * from tokens WHERE 1=1", (err, row) => {
+        if (err) {
+            console.error(err);
+            //return res.status(500).send("DB error, check logs/db");
+            return false
+        }
+        console.log(row)
+        cookies.push(row);
+    }, () => {
+        // The callback, so after the HTTP request is done
+        x.close();
+        // if the array of cookies pulled from the databse is longer than 0, that means
+        // we found a match, so the cookie in the browser is valid!
+        console.log("database operations all done")
+        console.log(cookies.length)
+        return (cookies.length != 0)
     });
-}
