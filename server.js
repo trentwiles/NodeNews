@@ -62,7 +62,7 @@ function massMailer(metadata, res){
         // close database connection
           x.close();
           mailer.massEmail(process.env.NEWSLETTER_TITLE, emails, metadata.title, metadata.raw, metadata.html)
-          res.send(emails)
+          return true
       });
   });
 }
@@ -150,6 +150,25 @@ app.get('/admin', function(req, res){
     return res.send("no cookie")
   }
   
+  if("action" in req.query){
+    if(req.query.action == "delete"){
+      // delete emails
+      return res.send("deleted users")
+    }
+    if(req.query.action == "test"){
+      // test newsletter
+      var newsletterMetaData = letterBuilder.buildTestNewsletter()
+      massMailer(newsletterMetaData, res)
+      return res.send("sent the test newsletter")
+    }
+    if(req.query.action == "send"){
+      // send the newsletter
+      var newsletterMetaData = letterBuilder.buildNewsletter()
+      massMailer(newsletterMetaData, res)
+      return res.send("sent the newsletter")
+    }
+  }
+
   var emails = [];
   
   x.serialize(() => {
@@ -162,47 +181,10 @@ app.get('/admin', function(req, res){
       }, () => {
           // The callback, so after the HTTP request is done
           x.close();
-          res.render('admin', { emails: emails });
+          return res.render('admin', { emails: emails });
       });
   });
 });
-
-app.post('/admin/delete', function(req, res){
-  // check to make sure the user is an admin...
-
-  // and maybe another check to make sure they are using some xsrf key...
-  const x = db.getDBObject();
-
-  if("token" in req.cookies){
-    x.get('SELECT * FROM tokens WHERE tkn = ?', [req.cookies.token], (err, row) => {
-      if (err) {
-        return res.status(500).send('Database error.');
-      }
-  
-      if (row) {
-        console.log("*** AUTHENTICATED USER, CONTINUE TO /admin/delete ***")
-      } else {
-        return res.redirect("/admin/login")
-      }
-    });
-  }else{
-    return res.send("no cookie")
-  }
-
-  db.wipeEmails()
-  res.redirect('/admin/?deleted=true')
-})
-
-app.post('/admin/test', function(req, res){
-  var newsletterMetaData = letterBuilder.buildTestNewsletter()
-  massMailer(newsletterMetaData, res)
-})
-
-app.post('/admin/send', function(req, res){
-  // more or less the /admin/test route, but with real email contents
-  var newsletterMetaData = letterBuilder.buildNewsletter()
-  massMailer(newsletterMetaData, res)
-})
 
 app.get('/admin/debug', function(req, res){
   res.setHeader('Content-Type', 'application/json');
