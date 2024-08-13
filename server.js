@@ -242,7 +242,7 @@ app.post('/admin/login', async function(req, res){
 })
 
 app.get('/test', function (req, res) {
-  res.render('admin2', {title: `${process.env.NEWSLETTER_TITLE} | Home`, index: true})
+  res.render('admin2', {title: `${process.env.NEWSLETTER_TITLE} | Home`, index: true, emails: ["james@example.com", "joe@example.com", "robert@example.com", "daniel@example.com", "frank@example.com", "rosa@example.com"]})
 })
 
 app.listen(3000)

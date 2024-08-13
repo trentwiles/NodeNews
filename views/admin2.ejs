@@ -14,7 +14,7 @@ Håvard Brynjulfsen
     <title>
         ds
     </title>
-    <!--<link href="" rel="stylesheet" /> -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -563,6 +563,48 @@ Håvard Brynjulfsen
             }
         }
     </style>
+    <script>
+        const emailListID = "#subList"
+        const totalEmailID = "#emailSubCount"
+        // adds functionality to the buttons
+        function deleteEmails(){
+            var aTagID = "#workingDelete"
+            var textTagID = "#workingDeleteText"
+            // this should send an HTTP request to delete all emails
+            // to be implemented
+            $(textTagID).text("Please wait...")
+            $(textTagID).prop("disabled",true);
+            //$(aTagID).prop("href","#");
+            $.post("?action=delete", function(data, status, more){
+                console.log(status)
+                if(more.status == 200){
+                    $(textTagID).text("Wipe Subscriber List")
+                    $(emailListID).hide()
+                    $(totalEmailID).text("Total emails: 0")
+                }else{
+                    $(textTagID).text("Error")
+                }
+            })
+        }
+        function email(){
+            var aTagID = "#workingEmail"
+            var textTagID = "#workingEmailText"
+            var testEmailStatusID = "#testEmailDescriptor"
+
+            $(textTagID).text("Please wait...")
+            $(textTagID).prop("disabled",true);
+            //$(aTagID).prop("href","#");
+            $.post("?action=test", function(data, status, more){
+                console.log(status)
+                if(more.status == 200){
+                    $(textTagID).text("Send Test Email")
+                    $(testEmailStatusID).text("Test email sent...")
+                }else{
+                    $(testEmailStatusID).text("Unable to send test email, check mail config")
+                }
+            })
+        }
+    </script>
     <main class="main">
         <div class="responsive-wrapper">
             <div class="main-header">
@@ -578,30 +620,33 @@ Håvard Brynjulfsen
                 <a href="#">Log Out</a>
             </div>
             <!-- **** EMAILS **** -->
-             <h2>Latest Subscribers</h2>
-             <ul>
-                <li>ij</li>
-                <li>ij</li>
-                <li>ij</li>
-                <li>ij</li>
-                <li>ij</li>
-             </ul>
+            <% if (emails.length != 0) { %>
+                <h2>Latest subscribers:</h2>
+                    <i id="emailSubCount"><%= emails.length %></i>
+                    <ul id="subList">
+                        <% for(var i=0; i<emails.length; i++) {%>
+                            <li><%= emails[i] %></li>
+                            <% if(i >= 3){ break; } %>
+                        <% } %>
+                    </ul>
+                </h2>
+            <% } %>
 
              <h2>Adminstrator Functions</h2>
             <!-- function toggle box -->
             <div class="content-header">
                 <div class="content-header-intro">
                     <h2>Send Test Email</h2>
-                    <p>Test your SMTP server configuation by sending a basic test email.</p>
+                    <p id="testEmailDescriptor">Test your SMTP server configuation by sending a basic test email.</p>
                 </div>
                 <div class="content-header-actions">
-                    <a href="#" class="button">
+                    <a class="button">
                         <i class="ph-faders-bold"></i>
                         <span>Send</span>
                     </a>
-                    <a href="#" id="workingTestEmail" class="button">
+                    <a onclick="email()" id="workingTestEmail" class="button">
                         <i class="ph-plus-bold"></i>
-                        <span>Send</span>
+                        <span id="workingTestEmailText">Send</span>
                     </a>
                 </div>
             </div>
@@ -613,13 +658,13 @@ Håvard Brynjulfsen
                             undone.</span></p>
                 </div>
                 <div class="content-header-actions">
-                    <a href="#" class="button">
+                    <a class="button">
                         <i class="ph-faders-bold"></i>
                         <span>Delete</span>
                     </a>
-                    <a href="#" id="workingDelete" class="button">
+                    <a onclick="deleteEmails()" id="workingDelete" class="button">
                         <i class="ph-plus-bold"></i>
-                        <span>Delete</span>
+                        <span id="workingDeleteText">Delete</span>
                     </a>
                 </div>
             </div>
@@ -630,11 +675,11 @@ Håvard Brynjulfsen
                     <p>Generate the current newsletter and mail it to all subscribers.</p>
                 </div>
                 <div class="content-header-actions">
-                    <a href="#" class="button">
+                    <a class="button">
                         <i class="ph-faders-bold"></i>
                         <span>Send</span>
                     </a>
-                    <a href="#" id="workingTestEmail" class="button">
+                    <a id="workingTestEmail" class="button">
                         <i class="ph-plus-bold"></i>
                         <span>Send</span>
                     </a>
