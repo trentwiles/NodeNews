@@ -241,4 +241,8 @@ app.post('/admin/login', async function(req, res){
 
 })
 
+app.get('/test', function (req, res) {
+  res.render('admin2', {title: `${process.env.NEWSLETTER_TITLE} | Home`, index: true})
+})
+
 app.listen(3000)
