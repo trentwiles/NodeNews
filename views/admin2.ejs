@@ -575,12 +575,15 @@ Håvard Brynjulfsen
             $(textTagID).text("Please wait...")
             $(textTagID).prop("disabled",true);
             //$(aTagID).prop("href","#");
-            $.post("?action=delete", function(data, status, more){
+            $.get("?action=delete", function(data, status, more){
                 console.log(status)
                 if(more.status == 200){
                     $(textTagID).text("Wipe Subscriber List")
                     $(emailListID).hide()
                     $(totalEmailID).text("Total emails: 0")
+                }else if(more.status == 302){
+                    // login redirect
+                    window.location.reload()
                 }else{
                     $(textTagID).text("Error")
                 }
@@ -594,12 +597,39 @@ Håvard Brynjulfsen
             $(textTagID).text("Please wait...")
             $(textTagID).prop("disabled",true);
             //$(aTagID).prop("href","#");
-            $.post("?action=test", function(data, status, more){
+            $.get("?action=test", function(data, status, more){
                 console.log(status)
                 if(more.status == 200){
                     $(textTagID).text("Send Test Email")
+                    $(textTagID).prop("disabled",false);
                     $(testEmailStatusID).text("Test email sent...")
+                }else if(more.status == 302){
+                    // login redirect
+                    window.location.reload()
                 }else{
+                    $(testEmailStatusID).text("Unable to send test email, check mail config")
+                }
+            })
+        }
+        function debugOpen(){
+            var aTagID = "#workingDebug"
+            var textTagID = "#workingEmailText"
+            var codeHolderID = "#debugSpace"
+
+            $(textTagID).text("Please wait...")
+            $(textTagID).prop("disabled",true);
+            //$(aTagID).prop("href","#");
+            $.get("?action=debug", function(data, status, more){
+                console.log(status)
+                if(more.status == 200){
+                    $(codeHolderID).text = JSON.stringify(data)
+                    $(textTagID).text("Send Test Email")
+                    $(testEmailStatusID).text("Test email sent...")
+                }else if(more.status == 302){
+                    // login redirect
+                    window.location.reload()
+                }
+                else{
                     $(testEmailStatusID).text("Unable to send test email, check mail config")
                 }
             })
@@ -622,7 +652,7 @@ Håvard Brynjulfsen
             <!-- **** EMAILS **** -->
             <% if (emails.length != 0) { %>
                 <h2>Latest subscribers:</h2>
-                    <i id="emailSubCount"><%= emails.length %></i>
+                    <i id="emailSubCount">Total emails: <%= emails.length %></i>
                     <ul id="subList">
                         <% for(var i=0; i<emails.length; i++) {%>
                             <li><%= emails[i] %></li>
@@ -671,17 +701,20 @@ Håvard Brynjulfsen
             <!-- function toggle box -->
             <div class="content-header">
                 <div class="content-header-intro">
-                    <h2>Send Newsletter</h2>
-                    <p>Generate the current newsletter and mail it to all subscribers.</p>
+                    <h2>Debugging Information</h2>
+                    <p>Review system status and useful information for troubleshooting.</p>
+                    <code id="debugSpace">
+
+                    </code>
                 </div>
                 <div class="content-header-actions">
                     <a class="button">
                         <i class="ph-faders-bold"></i>
-                        <span>Send</span>
+                        <span>View Debug Info</span>
                     </a>
-                    <a id="workingTestEmail" class="button">
+                    <a id="workingDebug" onclick="debugOpen()" class="button">
                         <i class="ph-plus-bold"></i>
-                        <span>Send</span>
+                        <span id="workingDebugText">View Debug Info</span>
                     </a>
                 </div>
             </div>

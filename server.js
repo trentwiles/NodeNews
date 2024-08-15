@@ -196,7 +196,7 @@ app.get('/admin', function(req, res){
       }, () => {
           // The callback, so after the HTTP request is done
           x.close();
-          return res.render('admin', { emails: emails });
+          return res.render('admin2', { emails: emails });
       });
   });
 });
