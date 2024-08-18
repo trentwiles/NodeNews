@@ -24,11 +24,18 @@ npm i
 
 Copy the provided .env.example file to .env. Fill out the required fields.
 
+3. Configure the crontab
+
+Set up a pinger service to send a POST request to `/cleanTokens` as often as possible.
+
 3. Run the webserver
 ```
 node .
 ```
 By default, it will run on port 3000.
+
+## Setting up Gmail SMTP
+Gmail is a free way to get started with sending emails. Set the `SMTP_HOST` to `smtp.gmail.com`, `SMTP_USERNAME` to your email (including the @gmail.com), and `SMTP_PASSWORD` to your app password (guide to that [linked here](https://myaccount.google.com/apppasswords)). Note that Gmail limits how many daily emails you can send.
 
 ## Skills Used
 * NodeJS
