@@ -155,6 +155,7 @@ app.get('/admin', function(req, res){
   if("action" in req.query){
     if(req.query.action == "delete"){
       // delete emails
+      db.wipeEmails()
       return res.send("deleted users")
     }
     if(req.query.action == "test"){

@@ -573,8 +573,8 @@ Håvard Brynjulfsen
             // this should send an HTTP request to delete all emails
             // to be implemented
             $(textTagID).text("Please wait...")
-            $(textTagID).prop("disabled",true);
-            //$(aTagID).prop("href","#");
+            // DISABLES THE BUTTON
+            $(aTagID).prop("onclick", "void()")
             $.get("?action=delete", function(data, status, more){
                 console.log(status)
                 if(more.status == 200){
@@ -613,7 +613,7 @@ Håvard Brynjulfsen
         }
         function debugOpen(){
             var aTagID = "#workingDebug"
-            var textTagID = "#workingEmailText"
+            var textTagID = "#workingDebugText"
             var codeHolderID = "#debugSpace"
 
             $(textTagID).text("Please wait...")
@@ -621,16 +621,17 @@ Håvard Brynjulfsen
             //$(aTagID).prop("href","#");
             $.get("?action=debug", function(data, status, more){
                 console.log(status)
+                // DISABLES THE BUTTON
+                $(aTagID).prop("onclick", "void()")
                 if(more.status == 200){
-                    $(codeHolderID).text = JSON.stringify(data)
-                    $(textTagID).text("Send Test Email")
-                    $(testEmailStatusID).text("Test email sent...")
+                    $(codeHolderID).text(JSON.stringify(data))
+                    $(aTagID).text("Debug Information Displayed")
                 }else if(more.status == 302){
                     // login redirect
                     window.location.reload()
                 }
                 else{
-                    $(testEmailStatusID).text("Unable to send test email, check mail config")
+                    $(aTagID).text("Unable to send test email, check mail config")
                 }
             })
         }
@@ -681,6 +682,9 @@ Håvard Brynjulfsen
                 </div>
             </div>
             <!-- function toggle box -->
+
+            <!-- This function will be disabled when the user table is blank -->
+            <% if (emails.length != 0) { %>
             <div class="content-header">
                 <div class="content-header-intro">
                     <h2>Wipe User Table</h2>
@@ -698,6 +702,9 @@ Håvard Brynjulfsen
                     </a>
                 </div>
             </div>
+            <% } else{ %>
+                <!-- Debugging message: there are no subscribers, the button to delete emails has therefore been omitted-->
+            <% }%>
             <!-- function toggle box -->
             <div class="content-header">
                 <div class="content-header-intro">
