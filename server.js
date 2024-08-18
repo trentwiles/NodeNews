@@ -8,6 +8,7 @@ const dotenv = require('dotenv')
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const fs = require('fs'); 
+const PORT = 3000
 
 dotenv.config()
 
@@ -43,6 +44,9 @@ if(
 ){
   throw new Error("One or more of the required .env variables has not been filled out. Please refer to the README.md file.")
 }
+
+console.log("---- Checks Passed ----")
+console.log("Server running on port " + PORT)
 
 /*
 Functions
@@ -242,8 +246,18 @@ app.post('/admin/login', async function(req, res){
 
 })
 
-app.get('/test', function (req, res) {
-  res.render('admin2', {title: `${process.env.NEWSLETTER_TITLE} | Home`, index: true, emails: ["james@example.com", "joe@example.com", "robert@example.com", "daniel@example.com", "frank@example.com", "rosa@example.com"]})
+app.get('/logout', function (req, res) {
+  res.clearCookie('token')
+  res.redirect('/')
 })
 
-app.listen(3000)
+app.post('/cleanTokens', function(req, res) {
+  // route that should be POSTed by a cronjob every so often to flush out old cookies
+  db.clearExpiredTokens()
+  console.log("Token database cleaned!")
+  return res.end(JSON.stringify({
+    'success': true
+  }))
+})
+
+app.listen(PORT)

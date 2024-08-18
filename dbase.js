@@ -6,10 +6,11 @@ function init(){
     const db = new sqlite3.Database('db.db')
     db.serialize(() => {
         db.run("CREATE TABLE IF NOT EXISTS eml (email TEXT, ts INTEGER)");
+        console.log("Email table initalized")
     })
     db.serialize(() => {
-        console.log('d')
         db.run("CREATE TABLE IF NOT EXISTS tokens (tkn TEXT, ts INTEGER)");
+        console.log("Token table initalized")
     })
     db.close();
     //return true
@@ -99,8 +100,8 @@ function clearExpiredTokens(){
     const hoursAgo = Math.floor(Date.now()/1000) - (24 * 60 * 60)
 
     db.serialize(() => {
-        const stmt = db.prepare("DELETE FROM tokens WHERE ts =< ?");
-        stmt.run(token);
+        const stmt = db.prepare("DELETE FROM tokens WHERE ts <= ?");
+        stmt.run(hoursAgo);
     }, () => {
         db.close();
         console.log("Deleted all tokens created before " + hoursAgo)
