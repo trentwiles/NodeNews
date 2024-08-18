@@ -45,6 +45,7 @@
                 <% if (typeof process.env.INSTAGRAM_URL !== 'undefined' && process.env.INSTAGRAM_URL !== (null || "")) { %>
                     <a class="btn btn-dark m-3" href="<%= process.env.INSTAGRAM_URL %>"><i class="fab fa-instagram"></i></a>
                 <% }%>
+                <a class="btn btn-dark m-3" href="/admin"><i class="fa-solid fa-gear"></i></a>
             </div>
         </div>
         <%- include('partials/footerNew.ejs'); %>
