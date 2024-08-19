@@ -5,6 +5,7 @@ const db = require('./dbase')
 const mailer = require('./mailer')
 const letterBuilder = require('./letterBuilder')
 const dotenv = require('dotenv')
+const cron = require('./cronjob')
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const fs = require('fs'); 
@@ -249,6 +250,35 @@ app.post('/admin/login', async function(req, res){
 app.get('/logout', function (req, res) {
   res.clearCookie('token')
   res.redirect('/')
+})
+
+app.post('/cleanTokens', function(req, res) {
+  // route that should be POSTed by a cronjob every so often to flush out old cookies
+  db.clearExpiredTokens()
+  console.log("Token database cleaned!")
+  return res.end(JSON.stringify({
+    'success': true
+  }))
+})
+
+app.post('/sendEmail', function(req, res) {
+  // first, make sure the user is authenticated
+  password = req.body.password
+
+  if(password == null || password != process.env.ADMIN_PASSWORD){
+    return res.end(JSON.stringify({
+      'success': false,
+      'message': 'Missing/invalid password. Hint: send the password in the POST body.'
+    }))
+  }
+  
+  // once that's out of the way, we can call the function from the cronjob.js file
+  cron.sendEmailCron()
+
+  return res.end(JSON.stringify({
+    'success': true,
+  }))
+
 })
 
 app.post('/cleanTokens', function(req, res) {
