@@ -1,6 +1,6 @@
 const newsletter = require('./letterBuilder')
 const mail = require('./mailer')
-const db = require('./dbase')
+//const db = require('./dbase')
 
 function sendEmailCron(){
     // When executed, this script will select all emails

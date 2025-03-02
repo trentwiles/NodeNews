@@ -650,14 +650,14 @@ Håvard Brynjulfsen
                 <a href="#">Configuation</a>
                 <a href="/logout">Log Out</a>
             </div>
+            <i>Welcome back <%= username[0]['username'] %>!</i>
             <!-- **** EMAILS **** -->
             <% if (emails.length != 0) { %>
                 <h2>Latest subscribers:</h2>
-                    <i id="emailSubCount">Total emails: <%= emails.length %></i>
+                    <i id="emailSubCount">Total emails: <%= qty %></i>
                     <ul id="subList">
                         <% for(var i=0; i<emails.length; i++) {%>
-                            <li><%= emails[i] %></li>
-                            <% if(i >= 3){ break; } %>
+                            <li><%= emails[i]['email'] %></li>
                         <% } %>
                     </ul>
                 </h2>

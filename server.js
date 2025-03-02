@@ -117,62 +117,61 @@ app.get('/unsubscribe', function(req, res){
   res.render('unsub', {"title": "Unsubcribe", index: false})
 })
 
+async function validate(req) {
+  const tokenInCookies = "token" in req.cookies
+  if (!tokenInCookies) { return null }
+  const username = await db.query("SELECT username FROM tokens WHERE tkn = $1", [req.cookies.token])
+  return username
+}
+
 app.get('/admin', async function(req, res){
   // check to make sure the user is an admin...
 
-  if("token" in req.cookies){
-
-    const isValid = await db.query("SELECT 1 FROM tokens WHERE tkn=$1", [req.cookies.token])
-
-    if (isValid.length == 0) {
-      return res.redirect("/admin/login")
-    }
-  }else{
-    // there is no cookie, send to homepage
-    return res.redirect("/admin/login")
-  }
-  
-  if("action" in req.query){
-    if(req.query.action == "delete"){
-      // delete emails
-      await db.query("DELETE FROM eml WHERE 1=1;", [])
-      return res.send("deleted users")
-    }
-    if(req.query.action == "test"){
-      // test newsletter
-      var newsletterMetaData = letterBuilder.buildTestNewsletter()
-      massMailer(newsletterMetaData, res)
-      await db.closeConnection()
-      return res.send("sent the test newsletter")
-    }
-    if(req.query.action == "send"){
-      // send the newsletter
-      var newsletterMetaData = letterBuilder.buildNewsletter()
-      massMailer(newsletterMetaData, res)
-      await db.closeConnection()
-      return res.send("sent the newsletter")
-    }
-    if(req.query.action == "debug"){
-      res.setHeader('Content-Type', 'application/json');
-      var env_status = ((process.env.SMTP_USER && process.env.SMTP_HOST && process.env.SMTP_PASS && process.env.NEWSLETTER_TITLE) != null)
-      // Guide to the debug page
-      // os: Operating System
-      // env_configuration: Are all of the parameters of the .env file set?
-      return res.end(JSON.stringify({
-        'os': process.platform,
-        'env_configuration': env_status
-      }));
-    }
-  }
+  const username = await validate(req)
+  if (username == null) { return res.redirect("/admin/login") }
 
   // if the user has not requested any of the action pages above,
   // they will be shown the plain admin panel
-  var emails = await db.query("SELECT email FROM eml");
-  return res.render('admin2', { emails: emails });
+  var qty = await db.query("SELECT COUNT(DISTINCT email) as c FROM eml");
+  var emails = await db.query("SELECT email FROM eml ORDER BY ts DESC LIMIT 3");
+  return res.render('admin2', { emails: emails, qty: qty[0]['c'], username: username });
 });
+
+/* ADMIN INTERNAL API METHODS */
+app.get('/admin/api/wipeEmails', async function(req, res){
+  const validation = await validate(req)
+  if (validation == null) {
+    return res.status(401).json({"error": "unauthorized"})
+  }
+
+  const deleteCount = await db.query("SELECT count(eml) as qty FROM eml")
+  await db.query("DELETE FROM eml WHERE 1=1")
+  return res.status(200).json({"status": `OK, deleted ${deleteCount[0]['qty']} emails`})
+})
+
+app.get('/admin/api/viewAuditLog', async function(req, res){
+  const validation = await validate(req)
+  if (validation == null) {
+    return res.status(401).json({"message": "unauthorized"})
+  }
+
+  await db.query("INSERT INTO audit_log (action, ip_address, username, ts) VALUES($1, $2, $3, $4)", ["VIEW_AUDIT_LOG", req.ip, validation[0]['username'], Math.floor(Date.now()/1000)])
+  const log = await db.query(`SELECT *
+                              FROM audit_log
+                              ORDER BY ts DESC
+                              LIMIT 15`)
+  return res.status(200).json({status: "OK", "log": log})
+})
 
 // The most important part of the admin page, the login
 app.get('/admin/login', async function(req, res){
+  if("token" in req.cookies) {
+    // if there's a token in the browser, we validate it before moving on
+    const isValid = await db.query(`SELECT 1 FROM tokens WHERE tkn = $1`, [req.cookies.token])
+    if (isValid.length > 0) {
+      return res.redirect("/admin")
+    }
+  }
   // if(checkIfAuth(JSON.stringify(req.cookies))){
   //   console.log("User attempted to access login page, but was already logged in...")
   //   res.redirect("/admin")
@@ -202,9 +201,15 @@ app.post('/admin/login', async function(req, res){
   const validPassword = await db.query("SELECT 1 FROM users WHERE username = $1 AND password = $2", [username, password])
 
   if (validPassword.length != 1) {
+    await db.query(`INSERT INTO audit_log (action, ip_address, username, ts) VALUES($1, $2, $3, $4)`,
+      ["INVALID_LOGIN_ATTEMPT", req.ip, username, Math.floor(Date.now()/1000)]
+    )
     return res.redirect("/admin/login?error=invalid_password")
   }
 
+  await db.query(`INSERT INTO audit_log (action, ip_address, username, ts) VALUES($1, $2, $3, $4)`,
+    ["VALID_LOGIN", req.ip, username, Math.floor(Date.now()/1000)]
+  )
   console.log("yay valid password")
 
   // if we've made it to this point, we know the user has a valid password
@@ -231,9 +236,16 @@ app.get('/logout', async function (req, res) {
   res.redirect('/')
 })
 
-app.post('/cleanTokens', function(req, res) {
+app.post('/cleanTokens', async function(req, res) {
   // route that should be POSTed by a cronjob every so often to flush out old cookies
-  db.clearExpiredTokens()
+  // aka deletes tokens older than 24 hours
+  await db.query(
+    `
+    WITH cte AS (SELECT tkn FROM tokens WHERE (EXTRACT(EPOCH FROM NOW())::BIGINT - ts) >= (60 * 60 * 24))
+    DELETE FROM tokens
+    WHERE tkn IN (select * from cte)
+    `
+  )
   console.log("Token database cleaned!")
   return res.end(JSON.stringify({
     'success': true

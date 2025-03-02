@@ -12,6 +12,7 @@ async function createUsers() {
         ['james', 'admin123', 'A'],
         ['martha', 'iloveyou', 'U'],
         ['frank', 'password123', 'U']
+        ['crontab_bot', 'nAUWnf39@^^fnllajhfbbmaiso', 'B']
     ]
 
     for(var i = 0; i < users.length; i++) {
