@@ -21,8 +21,6 @@ app.use(cookieParser())
 
 app.set('view engine', 'ejs');
 
-db.init()
-
 /*
 Check that the .env file has been properly set up
 */
@@ -53,7 +51,6 @@ console.log("Server running on port " + PORT)
 Functions
 */
 function massMailer(metadata, res){
-  const x = db.getDBObject()
   var emails = []
 
   x.serialize(() => {
@@ -79,8 +76,6 @@ function generateAuthToken(){
 async function checkIfAuth(cookies){
 
   if("token" in JSON.parse(cookies)){
-    db.connectDB()
-    db.init()
     console.log("Token cookie is set, asking database")
     const hasAuth = await db.validateToken(JSON.parse(cookies).token)
     await db.closeConnection()
@@ -98,6 +93,17 @@ app.get('/', function (req, res) {
   res.render('home', {title: `${process.env.NEWSLETTER_TITLE} | Home`, index: true})
 })
 
+app.get('/test', async function (req, res) {
+  try {
+    const api = await db.query("SELECT * FROM eml", []);
+    res.json({ count: api.length, data: api }); // ✅ Send response
+  } catch (error) {
+    console.error("Database query error:", error);
+    res.status(500).json({ error: "Database error" }); // ✅ Handle errors properly
+  }
+});
+
+
 app.post('/subscribe', async function (req, res) {
   // maybe add recaptcha here?
   var email = req.body.email
@@ -105,11 +111,7 @@ app.post('/subscribe', async function (req, res) {
   // replace this with a future captcha implementation
   var captchaStatus = true
   if(captchaStatus && email != null){
-    await db.connectDB();
-    await db.init();
-    await db.insertEmail(email);
-    await db.closeConnection()
-
+    await db.query("INSERT INTO eml(email, ts) VALUES($1, $2)", [email, Math.floor(Date.now() / 1000)]);
     res.redirect("/thanks")
   }else{
     res.send('Invalid')
@@ -126,28 +128,23 @@ app.get('/unsubscribe', function(req, res){
 
 app.get('/admin', async function(req, res){
   // check to make sure the user is an admin...
-  await db.connectDB();
-  await db.init();
 
   if("token" in req.cookies){
 
-    const isValid = await db.validateToken(req.cookies.token)
+    const isValid = await db.query("SELECT 1 FROM tokens WHERE tkn=$1", [req.cookies.token])
 
     if (!isValid) {
-      await db.closeConnection()
       return res.redirect("/admin/login")
     }
   }else{
     // there is no cookie, send to homepage
-    await db.closeConnection()
     return res.redirect("/admin/login")
   }
   
   if("action" in req.query){
     if(req.query.action == "delete"){
       // delete emails
-      await db.wipeEmails()
-      await db.closeConnection()
+      await db.query("DELETE FROM eml WHERE 1=1;", [])
       return res.send("deleted users")
     }
     if(req.query.action == "test"){
@@ -170,7 +167,6 @@ app.get('/admin', async function(req, res){
       // Guide to the debug page
       // os: Operating System
       // env_configuration: Are all of the parameters of the .env file set?
-      await db.closeConnection()
       return res.end(JSON.stringify({
         'os': process.platform,
         'env_configuration': env_status
@@ -180,8 +176,7 @@ app.get('/admin', async function(req, res){
 
   // if the user has not requested any of the action pages above,
   // they will be shown the plain admin panel
-  var emails = await db.selectAll();
-  await db.closeConnection()
+  var emails = await db.query("SELECT eml FROM email");
   return res.render('admin2', { emails: emails });
 });
 
@@ -207,12 +202,18 @@ app.post('/admin/login', async function(req, res){
   //https://stackabuse.com/handling-authentication-in-express-js/
   // Review ^^^^^^^
 
+  const count = await db.query("SELECT 1 FROM users WHERE username = $1", [username])
+  if (count.length != 1) {
+    return res.redirect("/admin/login?error=invalid_username")
+  }
+
+  // since this is really only a demo app, passwords will be stored in plaintext for the time being
+  const validPassword = await db.query("SELECT 1 FROM users WHERE username = $1 AND password = $2", [username, password])
+
   if(username == process.env.ADMIN_USERNAME && password == process.env.ADMIN_PASSWORD){
     // create a new authtoken
     const authToken = generateAuthToken()
     // add it to the database (current time is set in dbase.js)
-    await db.connectDB()
-    await db.init()
     await db.insertToken(authToken)
     // add it to the local cookies (and make it expire 24 hours from now)
     res.cookie('token', authToken, 

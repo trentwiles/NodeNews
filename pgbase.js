@@ -1,10 +1,10 @@
 const pg = require('pg');
-const { Client } = pg;
+const { Pool } = pg;
 const dotenv = require('dotenv');
 
 dotenv.config({ path: './.env' });
 
-const client = new Client({
+const pool = new Pool({
     user: process.env.POSTGRES_USERNAME,
     host: process.env.POSTGRES_HOST,
     database: process.env.POSTGRES_DB,
@@ -14,7 +14,7 @@ const client = new Client({
 
 async function connectDB() {
     try {
-        await client.connect();
+        await pool.connect();
         console.log("Connected to PostgreSQL");
     } 
     catch (error) {
@@ -27,6 +27,21 @@ async function init() {
     await client.query('CREATE TABLE IF NOT EXISTS eml (email VARCHAR(255) PRIMARY KEY, ts INTEGER)');
     await client.query('CREATE TABLE IF NOT EXISTS tokens (tkn VARCHAR(255) PRIMARY KEY, ts INTEGER)');
 }
+
+async function query(text, params) {
+    let client;
+    try {
+        client = await pool.connect(); // Get a connection from the pool
+        const result = await client.query(text, params); // Execute query
+        return result.rows; // Return query results
+    } catch (error) {
+        console.error("Database query error:", error);
+        throw error; // Rethrow the error for better debugging
+    } finally {
+        if (client) client.release(); // Always release the connection
+    }
+}
+
 
 async function insertEmail(email) {
     const insertText = 'INSERT INTO eml(email, ts) VALUES($1, $2)';
@@ -73,8 +88,8 @@ async function clearExpiredTokens() {
 }
 
 async function closeConnection() {
-    if (!client._ending) {
-        await client.end();
+    if (!pool._ending) {
+        await pool.end();
         console.log("Database connection closed");
     }
 }
@@ -108,5 +123,6 @@ module.exports = {
     clearExpiredTokens,
     selectAllTokens,
     validateToken,
+    query,
     closeConnection
 };
