@@ -1,7 +1,6 @@
 const sqlite3 = require('sqlite3').verbose()
 // db.db will be gitignored
 
-
 function init(){
     const db = new sqlite3.Database('db.db')
     db.serialize(() => {
