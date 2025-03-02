@@ -172,18 +172,12 @@ app.get('/admin/login', async function(req, res){
       return res.redirect("/admin")
     }
   }
-  // if(checkIfAuth(JSON.stringify(req.cookies))){
-  //   console.log("User attempted to access login page, but was already logged in...")
-  //   res.redirect("/admin")
-  // }
+
   res.render('login')
 })
 
 app.post('/admin/login', async function(req, res){
-  // if(checkIfAuth(JSON.stringify(req.cookies))){
-  //   console.log("User attempted to use login page, but was already logged in...")
-  //   res.redirect("/admin")
-  // }
+
   res.clearCookie("token")
 
   var username = req.body.username
@@ -236,7 +230,12 @@ app.get('/logout', async function (req, res) {
   res.redirect('/')
 })
 
-app.post('/cleanTokens', async function(req, res) {
+app.get('/admin/api/cleanTokens', async function(req, res) {
+  const validation = await validate(req)
+  if (validation == null) {
+    return res.status(401).json({"error": "unauthorized"})
+  }
+
   // route that should be POSTed by a cronjob every so often to flush out old cookies
   // aka deletes tokens older than 24 hours
   await db.query(
@@ -252,6 +251,8 @@ app.post('/cleanTokens', async function(req, res) {
   }))
 })
 
+
+// todo: overhaul the email sending functionality
 app.post('/sendEmail', function(req, res) {
   // first, make sure the user is authenticated
   password = req.body.password
