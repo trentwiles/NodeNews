@@ -74,15 +74,6 @@ function generateAuthToken(){
 }
 
 async function checkIfAuth(cookies){
-
-  if("token" in JSON.parse(cookies)){
-    console.log("Token cookie is set, asking database")
-    const hasAuth = await db.validateToken(JSON.parse(cookies).token)
-    await db.closeConnection()
-    return hasAuth
-  }
-
-  // no cookie set, so false
   return false
 }
 /*
@@ -133,7 +124,7 @@ app.get('/admin', async function(req, res){
 
     const isValid = await db.query("SELECT 1 FROM tokens WHERE tkn=$1", [req.cookies.token])
 
-    if (!isValid) {
+    if (isValid.length == 0) {
       return res.redirect("/admin/login")
     }
   }else{
@@ -176,16 +167,16 @@ app.get('/admin', async function(req, res){
 
   // if the user has not requested any of the action pages above,
   // they will be shown the plain admin panel
-  var emails = await db.query("SELECT eml FROM email");
+  var emails = await db.query("SELECT email FROM eml");
   return res.render('admin2', { emails: emails });
 });
 
 // The most important part of the admin page, the login
 app.get('/admin/login', async function(req, res){
-  if(checkIfAuth(JSON.stringify(req.cookies))){
-    console.log("User attempted to access login page, but was already logged in...")
-    res.redirect("/admin")
-  }
+  // if(checkIfAuth(JSON.stringify(req.cookies))){
+  //   console.log("User attempted to access login page, but was already logged in...")
+  //   res.redirect("/admin")
+  // }
   res.render('login')
 })
 
@@ -210,26 +201,32 @@ app.post('/admin/login', async function(req, res){
   // since this is really only a demo app, passwords will be stored in plaintext for the time being
   const validPassword = await db.query("SELECT 1 FROM users WHERE username = $1 AND password = $2", [username, password])
 
-  if(username == process.env.ADMIN_USERNAME && password == process.env.ADMIN_PASSWORD){
-    // create a new authtoken
-    const authToken = generateAuthToken()
-    // add it to the database (current time is set in dbase.js)
-    await db.insertToken(authToken)
-    // add it to the local cookies (and make it expire 24 hours from now)
-    res.cookie('token', authToken, 
-      { expires: new Date(Date.now() + (24 * 60 * 60)),});
-    
-    // send user to the admin homepage
-    await db.closeConnection()
-    res.redirect("/admin")
-    
-  }else{
-    res.redirect("/admin/login?error=true")
+  if (validPassword.length != 1) {
+    return res.redirect("/admin/login?error=invalid_password")
   }
 
+  console.log("yay valid password")
+
+  // if we've made it to this point, we know the user has a valid password
+  // therefore, we can create the token
+  const token = generateAuthToken()
+  await db.query("INSERT INTO tokens (tkn, username, ts) VALUES ($1, $2, $3)",
+    [token, username, Math.floor(Date.now()/1000)]
+  )
+
+  // add it to the local cookies (and make it expire 24 hours from now)
+  res.cookie('token', token, 
+    { expires: new Date(Date.now() + (24 * 60 * 60)),});
+
+
+  res.redirect('/admin')
 })
 
-app.get('/logout', function (req, res) {
+app.get('/logout', async function (req, res) {
+  // delete the token from the database
+  if("token" in req.cookies){
+    await db.query("DELETE FROM tokens WHERE tkn=$1", [req.cookies.token])
+  }
   res.clearCookie('token')
   res.redirect('/')
 })

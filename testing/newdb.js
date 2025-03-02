@@ -6,4 +6,18 @@ async function main() {
     return x
 }
 
-main();
+async function createUsers() {
+    await db.init()
+    const users = [
+        ['james', 'admin123', 'A'],
+        ['martha', 'iloveyou', 'U'],
+        ['frank', 'password123', 'U']
+    ]
+
+    for(var i = 0; i < users.length; i++) {
+        await db.query(`INSERT INTO users(username, password, permissions, joinTime, lastAccessedTime) 
+                        VALUES($1, $2, $3, $4, $5)`, [...users[i], Math.floor(Date.now()/1000), 0])
+    }
+}
+
+createUsers();
