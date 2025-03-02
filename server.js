@@ -1,7 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser');
 const app = express()
-const db = require('./dbase')
+const db = require('./pgbase')
 const mailer = require('./mailer')
 const letterBuilder = require('./letterBuilder')
 const dotenv = require('dotenv')
@@ -113,14 +113,18 @@ app.get('/', function (req, res) {
   res.render('home', {title: `${process.env.NEWSLETTER_TITLE} | Home`, index: true})
 })
 
-app.post('/subscribe', function (req, res) {
+app.post('/subscribe', async function (req, res) {
   // maybe add recaptcha here?
   var email = req.body.email
 
   // replace this with a future captcha implementation
   var captchaStatus = true
   if(captchaStatus && email != null){
-    db.insertEmail(email)
+    await db.connectDB();
+    await db.init();
+    await db.insertEmail(email);
+    await db.closeConnection()
+
     res.redirect("/thanks")
   }else{
     res.send('Invalid')
@@ -135,23 +139,18 @@ app.get('/unsubscribe', function(req, res){
   res.render('unsub', {"title": "Unsubcribe", index: false})
 })
 
-app.get('/admin', function(req, res){
+app.get('/admin', async function(req, res){
   // check to make sure the user is an admin...
-  const x = db.getDBObject();
+  await db.connectDB();
+  await db.init();
 
   if("token" in req.cookies){
-    x.get('SELECT * FROM tokens WHERE tkn = ?', [req.cookies.token], (err, row) => {
-      if (err) {
-        return res.status(500).send('Database error.');
-      }
-  
-      if (row) {
-        console.log("*** AUTHENTICATED USER, CONTINUE TO ADMIN PAGE ***")
-      } else {
-        // cookie is invalid, send to login
-        return res.redirect("/admin/login")
-      }
-    });
+
+    const isValid = await db.validateToken(req.cookies.token)
+
+    if (!isValid) {
+      return res.redirect("/admin/login")
+    }
   }else{
     // there is no cookie, send to homepage
     return res.redirect("/admin/login")
@@ -190,21 +189,9 @@ app.get('/admin', function(req, res){
 
   // if the user has not requested any of the action pages above,
   // they will be shown the plain admin panel
-  var emails = [];
+  var emails = await db.selectAll();
   
-  x.serialize(() => {
-      x.each("SELECT email from eml", (err, row) => {
-          if (err) {
-              console.error(err);
-              return res.status(500).send("DB error, check logs/db");
-          }
-          emails.push(row.email);
-      }, () => {
-          // The callback, so after the HTTP request is done
-          x.close();
-          return res.render('admin2', { emails: emails });
-      });
-  });
+  return res.render('admin2', { emails: emails });
 });
 
 // The most important part of the admin page, the login
@@ -233,6 +220,8 @@ app.post('/admin/login', async function(req, res){
     // create a new authtoken
     const authToken = generateAuthToken()
     // add it to the database (current time is set in dbase.js)
+    db.connectDB()
+    db.init()
     db.insertToken(authToken)
     // add it to the local cookies (and make it expire 24 hours from now)
     res.cookie('token', authToken, 
@@ -279,15 +268,6 @@ app.post('/sendEmail', function(req, res) {
     'success': true,
   }))
 
-})
-
-app.post('/cleanTokens', function(req, res) {
-  // route that should be POSTed by a cronjob every so often to flush out old cookies
-  db.clearExpiredTokens()
-  console.log("Token database cleaned!")
-  return res.end(JSON.stringify({
-    'success': true
-  }))
 })
 
 app.listen(PORT)

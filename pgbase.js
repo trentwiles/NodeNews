@@ -39,7 +39,17 @@ async function insertToken(token) {
 
 async function selectAll() {
     const res = await client.query("SELECT email FROM eml");
-    return res.rows; // ✅ Return fetched rows
+    return res.rows;
+}
+
+async function selectAllTokens() {
+    const res = await client.query("SELECT email FROM tokens");
+    return res.rows;
+}
+
+async function validateToken(possibleToken) {
+    const res = await client.query("SELECT 1 FROM tokens WHERE token=$1", [possibleToken]);
+    return (res.rowCount > 0)
 }
 
 async function wipeEmails() {
@@ -86,7 +96,7 @@ process.on('SIGTERM', async () => {
 // end unexpected exit handling
 
 module.exports = {
-    connectDB, // ✅ Added to ensure connection is established before calling other functions
+    connectDB,
     init,
     insertEmail,
     selectAll,
@@ -95,5 +105,7 @@ module.exports = {
     wipeTokens,
     deleteCertainToken,
     clearExpiredTokens,
+    selectAllTokens,
+    validateToken,
     closeConnection
 };
