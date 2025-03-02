@@ -1,5 +1,6 @@
 const dotenv = require('dotenv')
 const nodemailer = require("nodemailer");
+const db = require('./pgbase')
 
 /**************************************************************
 ***************************************************************
@@ -33,7 +34,7 @@ function convertEmailListToFormat(emailList){
 }
 
 // async..await is not allowed in global scope, must use a wrapper
-async function send(name, to, subject, textBody, htmlBody) {
+async function send(name, to, subject, textBody, htmlBody, executedBy) {
   const from = process.env.SMTP_USER
   const info = await transporter.sendMail({
     from: '"' + name +'" <' + from + '>',
@@ -43,6 +44,9 @@ async function send(name, to, subject, textBody, htmlBody) {
     html: htmlBody,
   });
 
+  await db.query(`INSERT INTO audit_log (action, ip_address, ts, username) VALUES($1, $2, $3, $4)`,
+      [`EMAIL_SENT - ${api.email}`, "127.0.0.1", Math.floor(Date.now()/1000), executedBy]
+  )
   console.log("Message sent: %s", info.messageId);
 }
 

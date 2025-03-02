@@ -21,4 +21,17 @@ async function createUsers() {
     }
 }
 
-createUsers();
+async function createEmails() {
+    await db.init();
+    const emails = [
+        ["me@trentwil.es", 938],
+        ["abuse@trentwil.es", 192],
+        ["wiles.t@northeastern.edu", 1029]
+    ]
+
+    for(var i = 0; i < emails.length; i++) {
+        await db.query(`INSERT INTO eml(email, ts) VALUES($1, $2)`, [...emails[i]])
+    }
+}
+
+createEmails();

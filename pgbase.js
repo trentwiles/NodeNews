@@ -34,7 +34,6 @@ async function init() {
         username VARCHAR(255),
         FOREIGN KEY (username) REFERENCES users(username)
     )`);
-    
 }
 
 async function query(text, params) {
