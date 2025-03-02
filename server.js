@@ -76,32 +76,17 @@ function generateAuthToken(){
   return crypto.randomBytes(30).toString('hex')
 }
 
-function checkIfAuth(cookies){
-  console.log(cookies)
+async function checkIfAuth(cookies){
+
   if("token" in JSON.parse(cookies)){
+    db.connectDB()
+    db.init()
     console.log("Token cookie is set, asking database")
-    const x = db.getDBObject()
-    const cooky = []
-    x.serialize(() => {
-      x.each("SELECT * from tokens WHERE tkn=?", [JSON.parse(cookies).token], (err, row) => {
-          if (err) {
-              console.error(err);
-              //return res.status(500).send("DB error, check logs/db");
-              return false
-          }
-          console.log(row)
-          cooky.push(row);
-      }, () => {
-          // The callback, so after the HTTP request is done
-          x.close();
-          // if the array of cookies pulled from the databse is longer than 0, that means
-          // we found a match, so the cookie in the browser is valid!
-          console.log("database operations all done")
-          console.log(cooky.length)
-          return (cooky.length != 0)
-      });
-  });
+    const hasAuth = await db.validateToken(JSON.parse(cookies).token)
+    await db.closeConnection()
+    return hasAuth
   }
+
   // no cookie set, so false
   return false
 }
@@ -149,29 +134,34 @@ app.get('/admin', async function(req, res){
     const isValid = await db.validateToken(req.cookies.token)
 
     if (!isValid) {
+      await db.closeConnection()
       return res.redirect("/admin/login")
     }
   }else{
     // there is no cookie, send to homepage
+    await db.closeConnection()
     return res.redirect("/admin/login")
   }
   
   if("action" in req.query){
     if(req.query.action == "delete"){
       // delete emails
-      db.wipeEmails()
+      await db.wipeEmails()
+      await db.closeConnection()
       return res.send("deleted users")
     }
     if(req.query.action == "test"){
       // test newsletter
       var newsletterMetaData = letterBuilder.buildTestNewsletter()
       massMailer(newsletterMetaData, res)
+      await db.closeConnection()
       return res.send("sent the test newsletter")
     }
     if(req.query.action == "send"){
       // send the newsletter
       var newsletterMetaData = letterBuilder.buildNewsletter()
       massMailer(newsletterMetaData, res)
+      await db.closeConnection()
       return res.send("sent the newsletter")
     }
     if(req.query.action == "debug"){
@@ -180,6 +170,7 @@ app.get('/admin', async function(req, res){
       // Guide to the debug page
       // os: Operating System
       // env_configuration: Are all of the parameters of the .env file set?
+      await db.closeConnection()
       return res.end(JSON.stringify({
         'os': process.platform,
         'env_configuration': env_status
@@ -190,7 +181,7 @@ app.get('/admin', async function(req, res){
   // if the user has not requested any of the action pages above,
   // they will be shown the plain admin panel
   var emails = await db.selectAll();
-  
+  await db.closeConnection()
   return res.render('admin2', { emails: emails });
 });
 
@@ -220,14 +211,15 @@ app.post('/admin/login', async function(req, res){
     // create a new authtoken
     const authToken = generateAuthToken()
     // add it to the database (current time is set in dbase.js)
-    db.connectDB()
-    db.init()
-    db.insertToken(authToken)
+    await db.connectDB()
+    await db.init()
+    await db.insertToken(authToken)
     // add it to the local cookies (and make it expire 24 hours from now)
     res.cookie('token', authToken, 
       { expires: new Date(Date.now() + (24 * 60 * 60)),});
     
     // send user to the admin homepage
+    await db.closeConnection()
     res.redirect("/admin")
     
   }else{

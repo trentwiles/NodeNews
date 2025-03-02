@@ -16,7 +16,8 @@ async function connectDB() {
     try {
         await client.connect();
         console.log("Connected to PostgreSQL");
-    } catch (error) {
+    } 
+    catch (error) {
         console.error("Database connection error:", error);
         process.exit(1);
     }
