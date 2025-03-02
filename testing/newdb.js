@@ -1,10 +1,20 @@
-const db = require("../pgbase")
+const db = require("../pgbase");
 
-db.init()
-db.insertEmail("franklin" + Math.random() * 1000 + "@gmail.com")
+async function main() {
+    // recipie: connect, initialize (create databases if not already there), insert item
+    // then show item, and disconnect
+    await db.connectDB();
+    await db.init();
 
-db.selectAll()
-    .then( (res) => {
-        console.log(res)
-    })
-    .finally( () => db.terminateConnection())
+    await db.insertEmail("franklin" + Math.floor(Math.random() * 1000) + "@gmail.com");
+
+    const res = await db.selectAll();
+    console.log(res);
+
+
+    await db.closeConnection();
+    console.log("Done.");
+    process.exit(0);
+}
+
+main();
