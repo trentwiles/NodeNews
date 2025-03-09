@@ -3,6 +3,14 @@ const cheerio = require('cheerio')
 
 dotenv.config()
 
+/**
+ * 
+ * TODO: Re-do this to fit the ad-hoc templating language created!
+ * Example: passing in the variable {title: "Hello"} and the template "$title$ world!" will render:
+ * "Hello world!"
+ */
+
+
 const MONTHS = [
     "January",
     "February",
